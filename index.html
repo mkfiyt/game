@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>里山の、これから。 — 人と動物の共存を考える村会議</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="washi-texture" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-seal" aria-hidden="true">里</div>
+        <div class="brand-text">
+          <h1>里山の、これから。</h1>
+          <p>長野・山あいの村で、実りと生きものの境界を考える協力シミュレーション</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <span class="seed-pill" id="seedPill" title="同じ合言葉を入れると、別の端末でも同じ獣の出没パターンで挑戦できます">
+          <span class="seed-dot"></span>
+          <span>村の合言葉：<strong id="currentSeedDisplay">nagano</strong></span>
+        </span>
+        <button class="btn" id="btnShare" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h2"/></svg>
+          URL・QRコード共有
+        </button>
+        <button class="btn" id="btnOpenSetup" type="button">合言葉・メンバー設定</button>
+        <button class="btn" id="btnReset" type="button">最初からやり直す</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="status-ribbon" aria-label="村の状況">
+      <div class="stat-card">
+        <div class="stat-label">
+          <span>いまの季節</span>
+          <span id="roundCounter">第 1 / 3 季節</span>
+        </div>
+        <div class="stat-value" id="seasonName">初夏・芽吹き</div>
+        <div class="stat-note" id="seasonSub">山から里へ、新しい命が動き出す季節</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">
+          <span>村の残り人手</span>
+          <span>持ち越し不可</span>
+        </div>
+        <div class="stat-value">
+          <span id="manpowerLeft">5</span>
+          <small>/ <span id="manpowerMax">5</span> 人分</small>
+        </div>
+        <div class="stat-note">みんなで相談して今期の作業に配分</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">
+          <span>村の共有資金</span>
+          <span>柵・整備に使用</span>
+        </div>
+        <div class="stat-value">
+          <span id="fundsValue">4</span>
+          <small>両</small>
+        </div>
+        <div class="stat-note">終了時に 2両以上 残すことが条件</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">
+          <span>これまでの収穫</span>
+          <span>1区画で +2</span>
+        </div>
+        <div class="stat-value">
+          <span id="harvestValue">0</span>
+          <small>個</small>
+        </div>
+        <div class="stat-note">産直に出荷すると 1個 → 資金1両</div>
+      </div>
+
+      <div class="stat-card goal-card">
+        <div class="stat-label">
+          <span>3季節終了時の目標</span>
+          <span>全員で達成</span>
+        </div>
+        <div class="goal-progress">
+          <span class="goal-badge" id="goalHarvestBadge">収穫 0 / 12</span>
+          <span class="goal-badge" id="goalFundsBadge">資金 4 / 2</span>
+        </div>
+        <div class="stat-note" id="animalForecast">獣の気配：調査中</div>
+      </div>
+    </section>
+
+    <div class="workspace-grid">
+      <section class="panel" aria-label="村の全景図">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">村の里山絵図</h2>
+            <p class="panel-sub">区画を選んで対策を相談しよう（山際に近いほど野生動物が訪れやすくなります）</p>
+          </div>
+          <span class="zone-badge" id="bufferBadge">緩衝帯（藪払い）：未整備</span>
+        </div>
+
+        <div class="map-frame">
+          <svg id="satoyamaSvg" class="satoyama-svg" viewBox="0 0 820 470" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#DCE4E8" />
+                <stop offset="55%" stop-color="#ECE9DF" />
+                <stop offset="100%" stop-color="#E7E2D4" />
+              </linearGradient>
+              <linearGradient id="alpsGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#9EB0BC" />
+                <stop offset="100%" stop-color="#C6D0D4" />
+              </linearGradient>
+              <linearGradient id="forestGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#355240" />
+                <stop offset="100%" stop-color="#4A6B52" />
+              </linearGradient>
+              <linearGradient id="streamGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#7BA3B5" />
+                <stop offset="100%" stop-color="#5B879B" />
+              </linearGradient>
+            </defs>
+
+            <rect width="820" height="470" fill="url(#skyGrad)" />
+            <path d="M0,150 L95,62 L165,112 L255,44 L345,105 L430,58 L525,118 L620,74 L710,122 L820,82 L820,185 L0,185 Z" fill="url(#alpsGrad)" opacity="0.72" />
+            <path d="M95,62 L118,86 L102,89 L95,78 L80,92 Z M255,44 L284,74 L264,77 L255,63 L236,79 Z M430,58 L455,84 L438,86 L430,73 L414,88 Z" fill="#FBF9F4" opacity="0.78" />
+            <path d="M0,145 Q210,130 420,148 T820,140 L820,175 L0,175 Z" fill="#F5F1E8" opacity="0.65" />
+
+            <path d="M0,168 Q180,142 390,162 T820,152 L820,245 L0,245 Z" fill="url(#forestGrad)" />
+
+            <g fill="#273F31" opacity="0.88">
+              <polygon points="48,172 36,204 60,204" />
+              <polygon points="72,166 58,202 86,202" />
+              <polygon points="142,162 128,198 156,198" />
+              <circle cx="195" cy="182" r="18" />
+              <circle cx="215" cy="186" r="15" />
+              <polygon points="315,164 301,200 329,200" />
+              <polygon points="340,158 324,198 356,198" />
+              <circle cx="465" cy="178" r="19" />
+              <polygon points="560,160 546,196 574,196" />
+              <polygon points="685,156 670,195 700,195" />
+              <circle cx="745" cy="178" r="17" />
+            </g>
+
+            <g id="bufferZoneVisual">
+              <path d="M0,222 Q240,206 470,222 T820,214 L820,252 L0,252 Z" fill="#6F8259" />
+              <g id="bushLayer" stroke="#3D5233" stroke-width="2" fill="none" stroke-linecap="round">
+                <path d="M40,236 q6,-12 12,0 m6,0 q6,-14 12,0" />
+                <path d="M160,230 q6,-12 12,0 m6,0 q6,-14 12,0" />
+                <path d="M295,228 q6,-12 12,0 m6,0 q6,-14 12,0" />
+                <path d="M435,232 q6,-12 12,0 m6,0 q6,-14 12,0" />
+                <path d="M580,228 q6,-12 12,0 m6,0 q6,-14 12,0" />
+                <path d="M715,226 q6,-12 12,0 m6,0 q6,-14 12,0" />
+              </g>
+              <text x="22" y="242" font-size="11" fill="#FBF9F4" opacity="0.9" font-family="serif">▲ 山と里の境界（緩衝帯エリア）</text>
+            </g>
+
+            <path d="M0,248 L820,248 L820,470 L0,470 Z" fill="#E3DCCB" />
+            <path d="M0,335 Q280,318 540,340 T820,332 L820,470 L0,470 Z" fill="#D9D0BC" />
+
+            <path d="M510,218 C495,275 545,315 512,375 C488,418 518,448 505,470" fill="none" stroke="url(#streamGrad)" stroke-width="11" stroke-linecap="round" opacity="0.82" />
+            <path d="M510,218 C495,275 545,315 512,375 C488,418 518,448 505,470" fill="none" stroke="#DCEBF0" stroke-width="2" stroke-dasharray="8 10" opacity="0.7" />
+
+            <g transform="translate(690, 392)" opacity="0.9">
+              <rect x="0" y="14" width="38" height="28" fill="#FBF9F4" stroke="#4A463E" stroke-width="1.5" />
+              <polygon points="-5,15 19,2 43,15" fill="#3B3934" />
+              <rect x="14" y="24" width="10" height="18" fill="#6E5D47" />
+              <rect x="48" y="18" width="46" height="24" fill="#EFECE4" stroke="#4A463E" stroke-width="1.5" />
+              <polygon points="43,19 71,5 99,19" fill="#544E44" />
+              <text x="12" y="55" font-size="11" fill="#57534A" font-family="serif">里の集落</text>
+            </g>
+
+            <g id="plotsLayer"></g>
+          </svg>
+        </div>
+
+        <div class="map-legend">
+          <div class="legend-items">
+            <span class="legend-item">
+              <svg width="14" height="14" viewBox="0 0 16 16"><path d="M8 14V5M8 8C5 8 4 5 4 5s3 0 4 3M8 6c3 0 4-3 4-3s-3 0-4 3" stroke="#2C4936" stroke-width="1.6" fill="none"/></svg>
+              手入れ済み（収穫+2）
+            </span>
+            <span class="legend-item">
+              <svg width="14" height="14" viewBox="0 0 16 16"><path d="M3 4v9M8 4v9M13 4v9M2 7h12M2 11h12" stroke="#B58522" stroke-width="1.5" fill="none"/></svg>
+              防護柵あり（持続）
+            </span>
+            <span class="legend-item">
+              <svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="4" fill="#BD4B31" opacity="0.25"/><circle cx="8" cy="8" r="2.2" fill="#BD4B31"/></svg>
+              夜間見回り中（今期）
+            </span>
+          </div>
+          <span>※毎季節、手入れした畑から収穫2個</span>
+        </div>
+
+        <div class="plot-pills" id="plotPills"></div>
+      </section>
+
+      <section class="panel" aria-label="作戦と行動の実行">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">作戦の実行と配分</h2>
+            <p class="panel-sub">選んだ行動は日誌と絵図に反映されます</p>
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <div class="selected-plot-banner">
+            <div class="selected-plot-header">
+              <span class="selected-plot-name" id="selectedPlotName">畑1：山際の段々畑・西</span>
+              <span class="zone-badge" id="selectedPlotZone">山際・獣道に近い</span>
+            </div>
+            <p class="panel-sub" id="selectedPlotStatus">まだ手入れされていません。今期の収穫には手入れが必要です。</p>
+          </div>
+
+          <div class="action-list">
+            <button class="action-card" id="actTend" type="button">
+              <div class="action-info">
+                <h4>畑の手入れをする</h4>
+                <p>草取りと土づくりを行い、この季節の収穫（+2個）に備えます</p>
+              </div>
+              <span class="action-cost">人手 1</span>
+            </button>
+
+            <button class="action-card" id="actFence" type="button">
+              <div class="action-info">
+                <h4>木柵・防護柵を設置する</h4>
+                <p>獣の侵入を高い確率で防ぎます（次の季節以降も残ります）</p>
+              </div>
+              <span class="action-cost">人手 1 ＋ 資金 1</span>
+            </button>
+
+            <button class="action-card" id="actPatrol" type="button">
+              <div class="action-info">
+                <h4>夜間の見回り・追い払い</h4>
+                <p>今期この畑を見回り、近づいた動物を傷つけず山へ返します</p>
+              </div>
+              <span class="action-cost">人手 1</span>
+            </button>
+          </div>
+
+          <div class="section-divider">村全体の取り組み・資源調整</div>
+
+          <div class="action-list">
+            <button class="action-card" id="actBuffer" type="button">
+              <div class="action-info">
+                <h4>山と里の「緩衝帯（藪払い）」を整備</h4>
+                <p>見通しを良くし、動物が里へ降りにくい境界をつくります（全畑に効果）</p>
+              </div>
+              <span class="action-cost">人手 1 ＋ 資金 1</span>
+            </button>
+
+            <button class="action-card" id="actSell" type="button">
+              <div class="action-info">
+                <h4>収穫を産直へ出荷する（換金）</h4>
+                <p>手元の収穫1個を資金1両に換え、柵や緩衝帯の費用に充てます</p>
+              </div>
+              <span class="action-cost">収穫 1 → 資金 1</span>
+            </button>
+          </div>
+
+          <div class="ready-box">
+            <div class="ready-status-row">
+              <span>相談がまとまったら季節を進めましょう</span>
+              <span id="leftoverManpowerNote" style="color:var(--ink-secondary);font-size:11.5px;"></span>
+            </div>
+            <button class="btn btn-primary ready-btn" id="btnAdvanceSeason" type="button">
+              この作戦で季節を進める
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel" aria-label="村会議メモと記録">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">村会議の視点・記録</h2>
+            <p class="panel-sub">立場を選んで意見を書き残せます</p>
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <div class="member-chips" id="memberChips"></div>
+
+          <div class="chat-box" id="chatBox"></div>
+
+          <div class="quick-phrases">
+            <button class="quick-btn" type="button" data-phrase="山際の畑に柵をつけますか？">山際に柵？</button>
+            <button class="quick-btn" type="button" data-phrase="見回り担当します！">見回り行きます</button>
+            <button class="quick-btn" type="button" data-phrase="緩衝帯を広げておきたいですね">緩衝帯どうする？</button>
+            <button class="quick-btn" type="button" data-phrase="この配分で賛成です！">賛成です</button>
+          </div>
+
+          <form class="chat-form" id="chatForm">
+            <input class="chat-input" id="chatInput" type="text" maxlength="100" placeholder="相談メモ・意見を記録..." />
+            <button class="btn btn-primary" type="submit">記録</button>
+          </form>
+
+          <div class="section-divider">村のできごと日誌</div>
+          <div class="log-feed" id="logFeed"></div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- 初期設定・村の合言葉モーダル -->
+  <div class="modal-backdrop" id="setupModal">
+    <div class="modal-card">
+      <div class="modal-kicker">NAGANO SATOYAMA COEXISTENCE</div>
+      <h2 class="modal-title">村会議をはじめる</h2>
+      <p style="font-size:13.5px;color:var(--ink-secondary);margin-bottom:16px;">
+        クラスやグループで同じ「村の合言葉」を入力すると、全員が同じ天候・動物の出没条件で挑戦できます。1台の画面を囲んで遊ぶ場合は、代表者の名前を入力してください。
+      </p>
+      <form id="setupForm">
+        <div class="form-group">
+          <label for="inputSeed">村の合言葉（シード値・半角英数字やひらがな）</label>
+          <input class="form-control" id="inputSeed" type="text" maxlength="20" value="nagano" placeholder="例：nagano / 3年1組" required />
+        </div>
+        <div class="form-group">
+          <label for="inputPlayerName">あなたの名前（または班名）</label>
+          <input class="form-control" id="inputPlayerName" type="text" maxlength="14" placeholder="例：A班 / たろう" required />
+        </div>
+        <div class="form-group">
+          <label for="inputPlayerRole">最初の立場・視点</label>
+          <select class="form-control" id="inputPlayerRole">
+            <option value="農家の担い手">農家の担い手（収穫と暮らしを守る）</option>
+            <option value="区長・世話役">区長・世話役（資金と全体のバランスを見る）</option>
+            <option value="鳥獣対策・見回り隊">鳥獣対策・見回り隊（獣の動きを読む）</option>
+            <option value="里山保全・環境委員">里山保全・環境委員（森との境界を整える）</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;padding:11px;font-size:14.5px;">
+          この条件で村会議をはじめる
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 季節の結果レポートモーダル -->
+  <div class="modal-backdrop hidden" id="seasonModal">
+    <div class="modal-card">
+      <div class="modal-kicker" id="reportKicker">SEASON REPORT</div>
+      <h2 class="modal-title" id="reportTitle">初夏・芽吹き の結果</h2>
+      <p id="reportSummary" style="font-size:14px;margin-bottom:14px;"></p>
+      <div id="reportEvents"></div>
+      <div style="margin-top:18px;display:flex;justify-content:flex-end;">
+        <button class="btn btn-primary" id="btnNextSeason" type="button">次の季節へ進む</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 最終結果モーダル -->
+  <div class="modal-backdrop hidden" id="finalModal">
+    <div class="modal-card">
+      <div class="modal-kicker" id="finalKicker">AUTUMN HARVEST & DIALOGUE</div>
+      <h2 class="modal-title" id="finalTitle">3つの季節を終えて</h2>
+      <div id="finalMetrics" style="padding:14px;background:var(--bg-washi);border:1px solid var(--line-border);border-radius:6px;margin-bottom:14px;"></div>
+      <div id="finalReflection" style="font-size:13.5px;line-height:1.75;margin-bottom:18px;"></div>
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <button class="btn" id="btnCloseFinal" type="button">絵図を見返す</button>
+        <button class="btn btn-primary" id="btnRestartFinal" type="button">新しい村でもう一度遊ぶ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- URL・QRコード共有モーダル -->
+  <div class="modal-backdrop hidden" id="shareModal">
+    <div class="modal-card" style="max-width:480px;">
+      <div class="modal-kicker">SHARE VILLAGE URL & QR</div>
+      <h2 class="modal-title">同じ村の条件をみんなに共有</h2>
+      <p style="font-size:13px;color:var(--ink-secondary);">
+        下のQRコードまたはURLを共有すると、同じ「村の合言葉（<strong id="shareSeedLabel">nagano</strong>）」がセットされた状態で開けます。
+      </p>
+      <div class="qr-box">
+        <div id="qrCodeContainer" aria-label="共有用QRコード"></div>
+        <div class="url-copy-row">
+          <input class="form-control" id="shareUrlInput" type="text" readonly style="font-size:12.5px;text-align:center;" />
+          <button class="btn btn-primary" id="btnCopyUrl" type="button">コピー</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button class="btn" id="btnCopySnapshotUrl" type="button" style="width:100%;justify-content:center;font-size:12px;">
+          今の途中経過も含めたURLをコピーする
+        </button>
+      </div>
+      <button class="btn" id="btnCloseShare" type="button" style="width:100%;justify-content:center;">閉じる</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
